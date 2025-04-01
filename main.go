@@ -11,17 +11,6 @@ import (
 	"strings"
 )
 
-/*
-PROJECT: TODO APP
-A todo app that takes in command line arguments and uses them to manage a to-do list in a text file.
-
-REQUIREMENTS:
-Add Task (Index, Date, Due Date, Description)
-Remove Task by ID
-View Tasks
-
-Store tasks in a text file.
-*/
 func main() {
 	/* Open the file, defer close. (os.O_RDWR is opening the file for read and write,
 	O_CREATE creates if does not exist, '0666 gives read and write permissions) */
@@ -32,38 +21,43 @@ func main() {
 	defer tasks.Close()
 
 	// Use the command line arguments to decide what to do
+	if len(os.Args) <= 1 {
+		log.Fatal("No arguments provided.")
+	}
+
 	action := os.Args[1]
 
-	if action == "add-task" {
+	switch action {
+	case "add-task":
 		CheckArgLength(4, os.Args)
 		taskToAdd := os.Args[2]
 		dueDate := os.Args[3]
 		newId := GenerateTaskID(tasks)
 		AddTask(tasks, newId, taskToAdd, dueDate)
-	} else if action == "remove" {
+	case "remove":
 		CheckArgLength(3, os.Args)
 		taskToRemove := os.Args[2]
 		RemoveTask(tasks, taskToRemove)
-	} else if action == "list" {
+	case "list":
 		ViewTasks(tasks)
-	} else {
+	default:
 		log.Fatal("Invalid action provided.")
 	}
 }
 
 // Gets the largest ID in the file and returns a new id incremented by one
 func GenerateTaskID(tasks *os.File) int {
-	biggestID := 0
-	line := ""
-	// Regex to match the first number in the line.
-	re := regexp.MustCompile(`^\d+`)
+	var (
+		biggestID int
+		line      string
+	)
 	scanner := bufio.NewScanner(tasks)
 	// Finds the biggest ID in the file
 	for scanner.Scan() {
 		line = scanner.Text()
-		match := re.FindString(line)
-		if match != "" {
-			num, err := strconv.Atoi(match)
+		taskId := string(line[0])
+		if taskId != "" {
+			num, err := strconv.Atoi(taskId)
 			if err != nil {
 				log.Fatal(err)
 			} else if num > biggestID {
@@ -120,8 +114,8 @@ func AddTask(tasks *os.File, id int, taskToAdd string, dueDate string) {
 	}
 }
 
-func CheckArgLength(i int, args []string) {
-	if len(os.Args) != i {
+func CheckArgLength(expectedLength int, args []string) {
+	if len(args) != expectedLength {
 		log.Fatal("Incorrect number of arguments provided.")
 	}
 }
